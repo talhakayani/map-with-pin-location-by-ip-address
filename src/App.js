@@ -1,19 +1,23 @@
 import React, { useEffect, useState } from 'react';
-import ipData from './Dataset/dataset.json';
-
+// import STARTUP_DATA from './Dataset/dataset.json';
 import GreenDotIcon from './Images/GreenDotIcon.png';
 import RedDotIcon from './Images/RedDotIcon.png';
 
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './App.css'; // Import the CSS file for styling
+import AliveIPsWorkerComponent from './Components/AliveIPs';
+import IpInfoWorkerComponent from './Components/IpInfoWorkerComponent';
 
 const IpMap = ({ map }) => {
+  const [ipData, setIpData] = useState([]);
+  console.log('file: App.js:14 ~ ipData:', ipData?.length);
+
   const createIconGreen = () => {
     return new L.Icon({
       iconUrl: GreenDotIcon,
-      iconSize: [16, 16],
-      iconAnchor: [8, 16],
+      iconSize: [14, 14],
+      iconAnchor: [6, 14],
     });
   };
 
@@ -24,6 +28,8 @@ const IpMap = ({ map }) => {
       iconAnchor: [8, 16],
     });
   };
+
+  // useEffect(() => {}, []);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
@@ -36,19 +42,26 @@ const IpMap = ({ map }) => {
       });
 
       // Add markers for each IP address
-      ipData.forEach((ipInfo) => {
+      ipData?.forEach((ipInfo) => {
         const { loc, isActive } = ipInfo;
-        const [lat, lon] = loc.split(',').map(Number);
+        if (loc) {
+          const [lat, lon] = loc?.split(',').map(Number);
 
-        const latOffset = (Math.random() - 0.5) * 0.01;
-        const lonOffset = (Math.random() - 0.5) * 0.01;
+          let u_lat = lat,
+            u_lon = lon;
 
-        const markerIcon = isActive ? createIconGreen() : createIconRed();
+          if (!ipInfo?.isActive) {
+            u_lat += (Math.random() - 0.5) * 0.01;
+            u_lon += (Math.random() - 0.5) * 0.01;
+          }
 
-        const marker = L.marker([lat + latOffset, lon + lonOffset], {
-          icon: markerIcon,
-        }).addTo(map);
-        marker.bindPopup(` <div class='tooltip-wrapper '>
+          const markerIcon = isActive ? createIconGreen() : createIconRed();
+
+          // const marker = L.marker([lat + latOffset, lon + lonOffset], {
+          const marker = L.marker([u_lat, u_lon], {
+            icon: markerIcon,
+          }).addTo(map);
+          marker.bindPopup(` <div class='tooltip-wrapper '>
         <div class='infowrapper'>
           <h4>Ip</h4>
           <p>${ipInfo?.ip}</p>
@@ -82,11 +95,17 @@ const IpMap = ({ map }) => {
           <p>${ipInfo?.isActive || false}</p>
         </div>
       </div>`);
+        }
       });
     }
-  }, [map]);
+  }, [map, JSON.stringify(ipData), ipData?.length]);
 
-  return null;
+  return (
+    <>
+      <IpInfoWorkerComponent setIpData={setIpData} />
+      <AliveIPsWorkerComponent ipData={ipData} setIpData={setIpData} />
+    </>
+  );
 };
 
 const App = () => {
